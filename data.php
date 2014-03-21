@@ -1,4 +1,4 @@
-<pre><?php 
+<?php 
 
 require_once('settings.php');
 
@@ -23,11 +23,12 @@ function days_in_month($year, $month) {
 }
 
 // Connect and set up the database.
-$dbhandle = new SQLite3('database.sqlite'); 
+$dbhandle = new SQLite3( $settings['database']['file'] ); 
 
 // Create tables if they do not exist 
 $results = @$dbhandle->query('CREATE TABLE IF NOT EXISTS twitter (datestring char(255), followers_count int, friends_count int,favourites_count int,statuses_count int, PRIMARY KEY (datestring))'); 
 $results = @$dbhandle->query('CREATE TABLE IF NOT EXISTS last_fm (datestring char(255), total int, PRIMARY KEY (datestring))'); 
+$results = @$dbhandle->query('CREATE TABLE IF NOT EXISTS github  (datestring char(255), public_repos int, public_gists int, followers int, following int, PRIMARY KEY (datestring))'); 
 
 
 // Twitter
@@ -46,8 +47,8 @@ $response =$twitter->setGetfield( '?screen_name='. $settings['twitter']['user'] 
              ->performRequest();  
 
 $results = json_decode($response, true ); 
-if( isset( $results[0]['followers_count'] ) && 
-	isset( $results[0]['friends_count'] ) && 
+if( isset( $results[0]['followers_count'] )  && 
+	isset( $results[0]['friends_count'] ) 	 && 
 	isset( $results[0]['favourites_count'] ) && 
 	isset( $results[0]['statuses_count'] ) ) 
 {
@@ -55,11 +56,16 @@ if( isset( $results[0]['followers_count'] ) &&
 	$results = @$dbhandle->query('INSERT OR REPLACE INTO twitter (datestring, followers_count, friends_count, favourites_count, statuses_count ) VALUES ( "'. date('Y-m-d') .'", "'.$results[0]['followers_count'] .'", "'. $results[0]['friends_count'] .'", "'. $results[0]['favourites_count'] .'", "'. $results[0]['statuses_count'] .'")');
 }
 
-// Display the twitter results 
-$results = $dbhandle->query('SELECT * FROM twitter ORDER BY datestring DESC LIMIT 100;');
-while ($row = $results->fetchArray()) {
-	echo $row['datestring'] .': followers_count='. $row['followers_count'] .', friends_count='. $row['friends_count'] .', favourites_count='. $row['favourites_count'] .', statuses_count='. $row['statuses_count'] ."\n";
+// Git Hub 
+// -------------------------------------------------
+/*
+// ToDo: change the GetURL function to work with http[S] requests. 
+$response = GetURL( $settings['github']['url']. $settings['github']['user'] ); 
+$results = json_decode($response, true ); 
+if( isset( $results['public_repos'] ) && isset( $results['public_gists'] ) && isset( $results['followers'] ) && isset( $results['following'] ) ) {
+	$results = @$dbhandle->query('INSERT OR REPLACE INTO github (datestring, public_repos, public_gists, followers, following ) VALUES ( "'. date('Y-m-d') .'", "'.$results['public_repos'] .'", "'. $results['public_gists'] .'", "'. $results['followers'] .'", "'. $results['following'] .'")');
 }
+*/
 
 
 
@@ -68,6 +74,15 @@ while ($row = $results->fetchArray()) {
 // -------------------------------------------------
 $current_time = time(); 
 $num_of_requests = 0 ; 
+
+
+// Check the database to see if what values from the last year that we have already gotten
+$old_datestring = array() ; 
+$sql = 'SELECT datestring FROM last_fm WHERE datestring >= "'. sprintf('%04d-%02d-%02d', date('Y')-1,1,1) .'" AND datestring <= "'. sprintf('%04d-%02d-%02d', date('Y'),31,12) .'" ;' ;
+$results = $dbhandle->query( $sql );	
+while( $row = $results->fetchArray() ) {
+	$old_datestring[] = $row['datestring'] ; 
+}
 
 // Only scan this last years worth of Last.fm data. 
 for( $year = date('Y')-1 ; $year < date('Y') ; $year++ ) {
@@ -89,13 +104,11 @@ for( $year = date('Y')-1 ; $year < date('Y') ; $year++ ) {
 				break; 
 			}
 
-			// ToDo: we shouldn't have to hammer the database so often. instead do this once a month 
-			// Check the database to see if we already have this value. 
-			$results = @$dbhandle->query('SELECT * FROM last_fm WHERE datestring="'.$datestring.'" ;');	
-			if( $results->fetchArray() != FALSE ) {
-				continue; // We have this point already. 
+			if (in_array($datestring, $old_datestring)) {
+				continue; // Already got this point.
 			}
 
+			echo $datestring .'= ';
 			$url = $settings['lastfm']['url'].'?method=user.getrecenttracks&user='.$settings['lastfm']['user'] .'&api_key='. $settings['lastfm']['api_key'] .'&format=json&from='.$start.'&to='.$end.'&extended=0&limit=1';
 			$results = GetURL( $url ) ; 
 			$num_of_requests++; 
@@ -112,12 +125,4 @@ for( $year = date('Y')-1 ; $year < date('Y') ; $year++ ) {
 		}
 	}
 }
-
-// Display the Last FM results 
-$results = $dbhandle->query('SELECT * FROM last_fm ORDER BY datestring DESC LIMIT 100;');
-while ($row = $results->fetchArray()) {
-	echo $row['datestring'] .'='. $row['total']. "\n";
-}
-
-
-?></pre>
+?>
