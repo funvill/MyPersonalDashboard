@@ -1,5 +1,8 @@
 <?php 
 
+$settings['debug']				= true ; 
+
+
 // Last FM
 // -------------------------------------------------
 $settings['lastfm']['url'] 		= 'http://ws.audioscrobbler.com/2.0/';
