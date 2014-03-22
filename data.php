@@ -56,10 +56,11 @@ function days_in_month($year, $month) {
 $dbhandle = new SQLite3( $settings['database']['file'] ); 
 
 // Create tables if they do not exist 
-$results = @$dbhandle->query('CREATE TABLE IF NOT EXISTS twitter (datestring char(255), followers_count int, friends_count int,favourites_count int,statuses_count int, PRIMARY KEY (datestring))'); 
-$results = @$dbhandle->query('CREATE TABLE IF NOT EXISTS last_fm (datestring char(255), total int, PRIMARY KEY (datestring))'); 
-$results = @$dbhandle->query('CREATE TABLE IF NOT EXISTS github  (datestring char(255), public_repos int, public_gists int, followers int, following int, contributions int PRIMARY KEY (datestring))'); 
+$results = $dbhandle->query('CREATE TABLE IF NOT EXISTS twitter (datestring char(255), followers_count int, friends_count int,favourites_count int,statuses_count int, PRIMARY KEY (datestring))'); 
+$results = $dbhandle->query('CREATE TABLE IF NOT EXISTS last_fm (datestring char(255), total int, PRIMARY KEY (datestring))'); 
+$results = $dbhandle->query('CREATE TABLE IF NOT EXISTS github  (datestring char(255), public_repos int, public_gists int, followers int, following int, contributions int, PRIMARY KEY (datestring))'); 
 // $results = @$dbhandle->query('ALTER TABLE github ADD COLUMN contributions int;');
+$results = $dbhandle->query('CREATE TABLE IF NOT EXISTS foursquare (datestring char(255), checkins int, PRIMARY KEY (datestring))'); 
 
 // Twitter
 // -------------------------------------------------
@@ -104,8 +105,13 @@ if( isset( $results['public_repos'] ) && isset( $results['public_gists'] ) && is
 	$sql_results = $dbhandle->query('UPDATE github SET public_repos="'.$results['public_repos'] .'", public_gists="'. $results['public_gists'] .'", followers="'. $results['followers'] .'", following="'. $results['following'] .'" WHERE datestring = "'. date('Y-m-d') .'"; ');
 }
 
-
-
+// Four Square 
+// -------------------------------------------------
+$response = GetURL( $settings['foursquare']['url']. 'users/self/checkins?oauth_token='. $settings['foursquare']['oauth_token'] .'&v=20140322&limit=1' ); 
+$results = json_decode($response, true); 
+if( isset( $results['response']['checkins']['count'] ) ) {
+	$sql_results = $dbhandle->query('INSERT OR REPLACE INTO foursquare (datestring, checkins ) VALUES ( "'. date('Y-m-d') .'", "'. $results['response']['checkins']['count'] .'" )');
+}
 
 
 
@@ -116,11 +122,11 @@ $num_of_requests = 0 ;
 
 
 // Check the database to see if what values from the last year that we have already gotten
-$old_datestring = array() ; 
+$lastfm_existing_recoreds = array() ; 
 $sql = 'SELECT datestring FROM last_fm WHERE datestring >= "'. sprintf('%04d-%02d-%02d', date('Y')-1,1,1) .'" AND datestring <= "'. sprintf('%04d-%02d-%02d', date('Y'),31,12) .'" ;' ;
 $results = $dbhandle->query( $sql );	
 while( $row = $results->fetchArray() ) {
-	$old_datestring[] = $row['datestring'] ; 
+	$lastfm_existing_recoreds[] = $row['datestring'] ; 
 }
 
 // Only scan this last years worth of Last.fm data. 
@@ -146,7 +152,7 @@ for( $year = date('Y') ; $year <= date('Y') ; $year++ ) {
 				break; 
 			}
 
-			if (in_array($datestring, $old_datestring)) {
+			if (in_array($datestring, $lastfm_existing_recoreds)) {
 				// echo "skipped, already in database \n";
 				continue; // Already got this point.
 			}

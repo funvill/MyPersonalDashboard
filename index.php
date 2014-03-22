@@ -72,6 +72,7 @@
       <div id="chartContainerTwitter" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitterStatuses" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerGithub" style="max-width:800px;height: 400px;"></div>
+      <div id="chartContainerFourSquare" style="max-width:800px;height: 400px;"></div>
 
 <script>
       <?php 
@@ -105,7 +106,54 @@
           }
         }
         echo '];';
+
+        // Display the foursquare dataSource 
+        echo 'var foursquareDataSource = [';
+        $results = $dbhandle->query('SELECT * FROM foursquare ORDER BY datestring DESC LIMIT 30;');
+        while ($row = $results->fetchArray()) {
+            echo '{ time: "'. $row['datestring'] .'", checkins: '. $row['checkins']."},\n";
+        }
+        echo '];';
 ?>
+
+
+$("#chartContainerFourSquare").dxChart({
+    dataSource: lastFMDataSource,
+    commonSeriesSettings: {
+        type: "splineArea",
+        argumentField: "time",
+        point: {
+        visible: true
+    },
+    },
+    series: [
+        { valueField: "checkins", name: "Checkins" },
+    ],
+    tooltip: {
+        enabled: true,
+        customizeText: function () {
+            return "Checkins: " + this.valueText;
+        }
+    },
+    
+    title: "FourSquare",
+    argumentAxis:{
+        valueMarginsEnabled: false,
+        grid:{
+            visible: false
+        },        
+    },
+    valueAxis:{
+        grid:{
+            visible: true
+        }
+    },
+    legend: {
+      visible:false,
+        verticalAlignment: "bottom",
+        horizontalAlignment: "center"
+    }
+});
 
 
 $("#chartContainerGithub").dxChart({

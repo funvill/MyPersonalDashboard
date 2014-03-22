@@ -17,6 +17,7 @@ $settings['lastfm']['user'] 	= 'funvill';
 $settings['foursquare']['url'] 				= 'https://api.foursquare.com/v2/';
 $settings['foursquare']['client_id'] 		= 'xxxx';
 $settings['foursquare']['client_secret'] 	= 'xxxx';
+$settings['foursquare']['oauth_token'] 		= 'xxxx';
 
 // Git hub
 // -------------------------------------------------
