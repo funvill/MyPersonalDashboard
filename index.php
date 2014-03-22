@@ -71,6 +71,7 @@
       <div id="chartContainerLastFM" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitter" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitterStatuses" style="max-width:800px;height: 400px;"></div>
+      <div id="chartContainerGithub" style="max-width:800px;height: 400px;"></div>
 
 <script>
       <?php 
@@ -99,12 +100,52 @@
         echo 'var githubDataSource = [';
         $results = $dbhandle->query('SELECT * FROM github ORDER BY datestring DESC LIMIT 30;');
         while ($row = $results->fetchArray()) {
-          echo '{ time: "'. $row['datestring'] .'", public_repos: '. $row['public_repos'].', public_gists: '. $row['public_gists'].', followers: '. $row['followers'].', following: '. $row['following'] ."},\n";
+          if(  $row['public_repos'] > 0 ) {
+            echo '{ time: "'. $row['datestring'] .'", public_repos: '. $row['public_repos'].', public_gists: '. $row['public_gists'].', followers: '. $row['followers'].', following: '. $row['following'] .', contributions: '. $row['contributions'] ."},\n";
+          }
         }
         echo '];';
 ?>
 
 
+$("#chartContainerGithub").dxChart({
+    dataSource: githubDataSource,
+    commonSeriesSettings: {
+        type: "spline",
+        argumentField: "time",
+        point: {
+            visible: true
+        },
+    },
+    series: [
+        { valueField: "public_repos", name: "Repos" },
+        { valueField: "public_gists", name: "Gists" },
+        { valueField: "followers",    name: "Followers" },
+        { valueField: "following",    name: "Following" },
+        { valueField: "contributions",    name: "Contributions" },
+    ],
+    tooltip: {
+        enabled: true,
+    },
+    
+    title: "GitHub",
+    argumentAxis:{
+        valueMarginsEnabled: false,
+        grid:{
+            visible: false
+        },        
+    },
+    valueAxis:{
+        grid:{
+            visible: true
+        }
+    },
+    legend: {
+      visible:true,
+        verticalAlignment: "bottom",
+        horizontalAlignment: "center"
+    }
+});
 
 $("#chartContainerTwitter").dxChart({
     dataSource: twitterDataSource,
@@ -148,7 +189,7 @@ $("#chartContainerTwitter").dxChart({
 $("#chartContainerTwitterStatuses").dxChart({
     dataSource: twitterDataSource,
     commonSeriesSettings: {
-        type: "splinearea",
+        type: "bar",
         argumentField: "time",
         point: {
         visible: true
