@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<?php require_once('data.php'); ?><!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -69,10 +69,11 @@
       -->
 
       <div id="chartContainerLastFM" style="max-width:800px;height: 400px;"></div>
+      <div id="chartContainerFourSquare" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitter" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitterStatuses" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerGithub" style="max-width:800px;height: 400px;"></div>
-      <div id="chartContainerFourSquare" style="max-width:800px;height: 400px;"></div>
+      
 
 <script>
       <?php 
@@ -118,7 +119,7 @@
 
 
 $("#chartContainerFourSquare").dxChart({
-    dataSource: lastFMDataSource,
+    dataSource: foursquareDataSource,
     commonSeriesSettings: {
         type: "splineArea",
         argumentField: "time",
@@ -325,7 +326,7 @@ $("#chartContainerLastFM").dxChart({
     <!-- Latest compiled and minified JavaScript -->
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 
-    <?php require_once('data.php'); ?>
+    
 
   </body>
 </html>

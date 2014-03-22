@@ -1,5 +1,12 @@
 <?php 
-
+/**
+ * My Personal Dashboard 
+ * 
+ * There are two types of data sources. Ones that we have to request every day because they 
+ * only show the current values and the other one that you can query historal values (LastFM, FourSquare). 
+ * 
+ *
+ */
 require_once('settings.php');
 
 // Script set up.
@@ -107,11 +114,79 @@ if( isset( $results['public_repos'] ) && isset( $results['public_gists'] ) && is
 
 // Four Square 
 // -------------------------------------------------
+/*
 $response = GetURL( $settings['foursquare']['url']. 'users/self/checkins?oauth_token='. $settings['foursquare']['oauth_token'] .'&v=20140322&limit=1' ); 
 $results = json_decode($response, true); 
 if( isset( $results['response']['checkins']['count'] ) ) {
 	$sql_results = $dbhandle->query('INSERT OR REPLACE INTO foursquare (datestring, checkins ) VALUES ( "'. date('Y-m-d') .'", "'. $results['response']['checkins']['count'] .'" )');
 }
+*/
+
+$current_time = time(); 
+$num_of_requests = 0 ; 
+
+
+// Check the database to see if what values from the last year that we have already gotten
+$foursquare_existing_recoreds = array() ; 
+$sql = 'SELECT datestring FROM foursquare WHERE datestring >= "'. sprintf('%04d-%02d-%02d', date('Y')-1,1,1) .'" AND datestring <= "'. sprintf('%04d-%02d-%02d', date('Y'),31,12) .'" ;' ;
+$results = $dbhandle->query( $sql );	
+while( $row = $results->fetchArray() ) {
+	$foursquare_existing_recoreds[] = $row['datestring'] ; 
+}
+
+
+// Only scan this last years worth of Last.fm data. 
+for( $year = date('Y') ; $year <= date('Y') ; $year++ ) {
+	for( $month = 1 ; $month < 12 ; $month++ ) {
+		$max_days = days_in_month($year, $month ); 
+		for( $day = 1 ; $day <= $max_days ; $day++) {
+			if( $num_of_requests > 30 ) {
+				break; 
+			}
+
+			// Create the date string. 
+			$start = mktime (0,0,0, $month, $day, $year );
+			$end   = mktime (0,0,0, $month, $day+1, $year );
+			$datestring = sprintf('%04d-%02d-%02d', $year,$month,$day);
+
+			// echo $datestring .'... ';
+
+			// Check for current date. 
+			if( $current_time < $end ) {
+				// Don't poll todays date as we might get bad data if we listen to more songs today. 
+				// echo "skipped, todays date \n";
+				break; 
+			}
+
+			if (in_array($datestring, $foursquare_existing_recoreds)) {
+				// echo "skipped, already in database \n";
+				continue; // Already got this point.
+			}
+
+			$url = $settings['foursquare']['url']. 'users/self/checkins?oauth_token='. $settings['foursquare']['oauth_token'] .'&v=20140322&afterTimestamp='.$start.'&beforeTimestamp='.$end ;
+			$response = GetURL( $url ) ; 
+			$results = json_decode($response, true); 
+			$num_of_requests++; 
+
+			// echo '<pre>'.$datestring .'='. count( $results["response"]["checkins"]["items"] ) .'</pre>';
+			
+			
+
+			// Check to see if we recived an error. If we do then use the total of zero as a value. 
+			$total = 0 ; 
+			if( isset( $results["response"]["checkins"]["items"] ) ) {
+				$total = count( $results["response"]["checkins"]["items"] ) ; 
+			}
+
+
+			// Update the database 
+			$results = $dbhandle->query('INSERT INTO foursquare (datestring, checkins) VALUES ( "'. $datestring .'", "'. $total .'")');
+			
+		}
+	}
+}
+
+
 
 
 
