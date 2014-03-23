@@ -229,7 +229,7 @@ for( $year = date('Y') ; $year <= date('Y') ; $year++ ) {
 				continue; // Already got this point.
 			}
 
-			echo $datestring .'= ';
+			// echo $datestring .'= ';
 			$url = $settings['lastfm']['url'].'?method=user.getrecenttracks&user='.$settings['lastfm']['user'] .'&api_key='. $settings['lastfm']['api_key'] .'&format=json&from='.$start.'&to='.$end.'&extended=0&limit=1';
 			$response = GetURL( $url ) ; 
 			$results = json_decode($response, true); 

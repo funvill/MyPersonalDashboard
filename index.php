@@ -39,6 +39,11 @@
           <div class="navbar-header">
             <a class="navbar-brand" href="#">Personal Dashboard</a>
           </div>
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="#">Home</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="https://github.com/funvill/MyPersonalDashboard">Source code</a></li>
+          </ul>
         </div>
       </div>
     
@@ -48,9 +53,37 @@
       <div id="chartContainerTwitter" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitterStatuses" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerGithub" style="max-width:800px;height: 400px;"></div>
-      
 
-<script>
+      <h2 id='about'>About</h2>
+      <p>ToDo: Fill this page in with notes about this project. </p>
+      <p>Inspired by <a href='https://ahmetalpbalkan.com/blog/personal-dashboard/'>A dashboard about myself by Ahmet Alp Balkan</a>, and <a href='http://blog.stephenwolfram.com/2012/03/the-personal-analytics-of-my-life/'>The Personal Analytics of My Life by Stephen Wolfram</a></p>
+      <p>Reasons: 
+        <ul>
+            <li>Learn different APIs (Twitter, Github, Foursquare, LastFM, Moves-App, etc...)</li>
+            <li>Learn javascript chart system (ChartJS, D3JS, etc...) </li>
+            <li><a href='http://quantifiedself.com/'>Quantified Self</a> - I have always been interested in the Quantified Self (QT) movement. If you can't track it then you can't change it. </li>
+        </ul>
+      </p>
+      <p>Tools used: 
+          <ul>
+              <li><a href='http://chartjs.devexpress.com/'>ChartJS</a> - Pretty Charts and Graphs </li>
+              <li><a href='http://getbootstrap.com/'>Bootstrap</a> - A frontend framework for making websites fast.</li>
+              <li><a href='https://dev.twitter.com/docs/api/1.1'>Twitter API</a> - Social site. </li>
+              <li><a href='http://github.com/j7mbo/twitter-api-php'>Twitter API PHP</a> - An php libary that makes communicating with twitter easier</li>
+              <li><a href='https://developer.foursquare.com/'>Foursquare API</a> - Tracks the places I check into </li>
+              <li><a href='http://www.last.fm/api'>LastFM API</a> - Tracks the songs that are played from my variouse devices and apps.</li>
+              <li><a href='http://developer.github.com/'>Github API</a> - Storage for the source code. Tracking commits</li>
+              <li><a href='https://moves-app.com/'>Moves-App</a> - An Android and ISO app that tracks your movements and steps.</li>
+              <li><a href='https://www.sqlite.org/'>SQLite</a> - Filebased database.</li>
+
+              
+          </ul>
+      </p>  
+    </div><!-- /.container -->
+
+
+
+    <script>
       <?php 
         require_once('settings.php');
 
@@ -166,10 +199,6 @@ $("#chartContainerCombined").dxChart({
     }
 });
 
-
-
-
-
 $("#chartContainerGithubContributions").dxChart({
     dataSource: githubDataSourceContributions,
     commonSeriesSettings: {
@@ -207,10 +236,6 @@ $("#chartContainerGithubContributions").dxChart({
         horizontalAlignment: "center"
     }
 });
-
-
-
-
 
 $("#chartContainerGithub").dxChart({
     dataSource: githubDataSource,
@@ -330,9 +355,7 @@ $("#chartContainerTwitterStatuses").dxChart({
 
 </script>
 
-
-
-    </div><!-- /.container -->
+    
 
     
     <!-- Bootstrap core JavaScript
@@ -341,8 +364,5 @@ $("#chartContainerTwitterStatuses").dxChart({
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> -->
     <!-- Latest compiled and minified JavaScript -->
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
-
-    
-
   </body>
 </html>
