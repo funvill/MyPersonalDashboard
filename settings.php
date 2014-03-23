@@ -38,4 +38,9 @@ $settings['twitter']['access_token_secret'] = 'xxxx';
 $settings['twitter']['consumer_key'] 		= 'xxxx';
 $settings['twitter']['consumer_secret'] 	= 'xxxx';
 
+// Moves-app
+// -------------------------------------------------
+$settings['moves-app']['url']				= 'https://api.moves-app.com/';
+$settings['moves-app']['client_id']			= 'xxxx';
+$settings['moves-app']['client_secret']		= 'xxxx';
 ?>

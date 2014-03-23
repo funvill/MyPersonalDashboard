@@ -1,4 +1,4 @@
-<?php require_once('data.php'); ?><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
@@ -44,32 +44,7 @@
     
 
     <div class="container">
-    <!-- 
-      <div class="row">
-        <div class="col-md-6">
-          <script src="js/dug.js"></script>
-          <div id="github">Loading&hellip;</div>
-          <script>
-            dug({
-              endpoint: 'https://api.github.com/users/funvill',
-              target: 'github',
-              error: function(){
-                console.log('error');
-              },
-              template: '<div>\
-                <a href="{{data.url}}">\
-                  <h3>{{data.login}}</h3>\
-                  <img src="{{data.avatar_url}}">\
-                </a>\
-              </div>'
-            });
-          </script>
-        </div>
-      </div> 
-      -->
-
-      <div id="chartContainerLastFM" style="max-width:800px;height: 400px;"></div>
-      <div id="chartContainerFourSquare" style="max-width:800px;height: 400px;"></div>
+      <div id="chartContainerCombined" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitter" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerTwitterStatuses" style="max-width:800px;height: 400px;"></div>
       <div id="chartContainerGithub" style="max-width:800px;height: 400px;"></div>
@@ -82,6 +57,29 @@
         // Connect and set up the database.
         $dbhandle = new SQLite3( $settings['database']['file'] ); 
 
+        // Combine all the date driven data. 
+        $combinedData = array(); 
+        $results = $dbhandle->query('SELECT * FROM last_fm ORDER BY datestring DESC LIMIT 30;');
+        while ($row = $results->fetchArray()) {
+          $combinedData[ $row['datestring'] ]['lastfm'] = $row['total'] ; 
+        } 
+        $results = $dbhandle->query('SELECT * FROM foursquare ORDER BY datestring DESC LIMIT 30;');
+        while ($row = $results->fetchArray()) {
+          $combinedData[ $row['datestring'] ]['foursquare'] = $row['checkins'] ; 
+        } 
+        $results = $dbhandle->query('SELECT datestring, contributions FROM github ORDER BY datestring DESC LIMIT 30;');
+        while ($row = $results->fetchArray()) {
+          $combinedData[ $row['datestring'] ]['github'] = $row['contributions'] ; 
+        } 
+        echo 'var combinedDataSource = [';
+        foreach( $combinedData as $key => $value ) {
+            if( isset( $value['lastfm'] ) && isset( $value['foursquare'] ) && isset( $value['github'] ) ) {
+                echo '{ time: "'. $key .'", lastfm: '. $value['lastfm'] .', foursquare:'. $value['foursquare'].', github:'. $value['github'] ."},\n";
+            }
+        } 
+        echo '];';
+
+
         // Display the Twitter dataSource 
         echo 'var twitterDataSource = [';
         $results = $dbhandle->query('SELECT * FROM twitter ORDER BY datestring DESC LIMIT 30;');
@@ -90,17 +88,10 @@
         } 
         echo '];';
 
-        // Display the Last FM dataSource 
-        echo 'var lastFMDataSource = [';
-        $results = $dbhandle->query('SELECT * FROM last_fm ORDER BY datestring DESC LIMIT 30;');
-        while ($row = $results->fetchArray()) {
-          echo '{ time: "'. $row['datestring'] .'", total: '. $row['total'] ."},\n";
-        }
-        echo '];';
 
         // Display the Github dataSource 
         echo 'var githubDataSource = [';
-        $results = $dbhandle->query('SELECT * FROM github ORDER BY datestring DESC LIMIT 30;');
+        $results = $dbhandle->query('SELECT * FROM github WHERE public_repos > 0 ORDER BY datestring DESC LIMIT 30;');
         while ($row = $results->fetchArray()) {
           if(  $row['public_repos'] > 0 ) {
             echo '{ time: "'. $row['datestring'] .'", public_repos: '. $row['public_repos'].', public_gists: '. $row['public_gists'].', followers: '. $row['followers'].', following: '. $row['following'] .', contributions: '. $row['contributions'] ."},\n";
@@ -108,18 +99,18 @@
         }
         echo '];';
 
-        // Display the foursquare dataSource 
-        echo 'var foursquareDataSource = [';
-        $results = $dbhandle->query('SELECT * FROM foursquare ORDER BY datestring DESC LIMIT 30;');
+        echo 'var githubDataSourceContributions = [';
+        $results = $dbhandle->query('SELECT datestring, contributions FROM github ORDER BY datestring DESC LIMIT 30;');
         while ($row = $results->fetchArray()) {
-            echo '{ time: "'. $row['datestring'] .'", checkins: '. $row['checkins']."},\n";
+            echo '{ time: "'. $row['datestring'] .'", contributions: '. $row['contributions'] ."},\n";
         }
         echo '];';
+
 ?>
 
 
-$("#chartContainerFourSquare").dxChart({
-    dataSource: foursquareDataSource,
+$("#chartContainerCombined").dxChart({
+    dataSource: combinedDataSource,
     commonSeriesSettings: {
         type: "splineArea",
         argumentField: "time",
@@ -128,16 +119,77 @@ $("#chartContainerFourSquare").dxChart({
     },
     },
     series: [
-        { valueField: "checkins", name: "Checkins" },
+        { valueField: "lastfm",     name: "Songs Played",                                             color: "#880000" },
+        { valueField: "github",     name: "Github Contributions",                     type: "spline", color: "#008800" },
+        { valueField: "foursquare", name: "Places Visited",         axis: "Checkins", type: "spline", color: "#000088" },
+    ],
+    tooltip: {
+        enabled: true,
+        customizeText: function (arg) {
+            return this.valueText ; 
+        }
+    },
+    
+    title: "Daily Activies",
+    argumentAxis:{
+        valueMarginsEnabled: false,
+        grid:{
+            visible: false
+        },        
+    },
+
+    valueAxis: [{
+        grid: {
+            visible: true
+        },
+        title: {
+            text: "LastFM Songs Played"
+        },
+    }, {
+        name: "Checkins",
+        position: "right",
+        grid: {
+            visible: true
+        },
+        title: {
+            text: "FourSquare Checkins"
+        },
+        label: {
+            format: "largeNumber"
+        }
+    }],
+
+    legend: {
+        visible:true,
+        verticalAlignment: "bottom",
+        horizontalAlignment: "center"
+    }
+});
+
+
+
+
+
+$("#chartContainerGithubContributions").dxChart({
+    dataSource: githubDataSourceContributions,
+    commonSeriesSettings: {
+        type: "splineArea",
+        argumentField: "time",
+        point: {
+        visible: true
+    },
+    },
+    series: [
+        { valueField: "contributions", name: "Contributions" },
     ],
     tooltip: {
         enabled: true,
         customizeText: function () {
-            return "Checkins: " + this.valueText;
+            return "Contributions: " + this.valueText;
         }
     },
     
-    title: "FourSquare",
+    title: "Github contributions",
     argumentAxis:{
         valueMarginsEnabled: false,
         grid:{
@@ -157,6 +209,9 @@ $("#chartContainerFourSquare").dxChart({
 });
 
 
+
+
+
 $("#chartContainerGithub").dxChart({
     dataSource: githubDataSource,
     commonSeriesSettings: {
@@ -171,7 +226,6 @@ $("#chartContainerGithub").dxChart({
         { valueField: "public_gists", name: "Gists" },
         { valueField: "followers",    name: "Followers" },
         { valueField: "following",    name: "Following" },
-        { valueField: "contributions",    name: "Contributions" },
     ],
     tooltip: {
         enabled: true,
@@ -273,44 +327,6 @@ $("#chartContainerTwitterStatuses").dxChart({
     }
 });
 
-$("#chartContainerLastFM").dxChart({
-    dataSource: lastFMDataSource,
-    commonSeriesSettings: {
-        type: "splineArea",
-        argumentField: "time",
-        point: {
-        visible: true
-    },
-    },
-    series: [
-        { valueField: "total", name: "Songs" },
-    ],
-    tooltip: {
-        enabled: true,
-        customizeText: function () {
-            // return this.argumentField + " Songs: " + this.valueText;
-            return "Songs: " + this.valueText;
-        }
-    },
-    
-    title: "LastFM",
-    argumentAxis:{
-        valueMarginsEnabled: false,
-        grid:{
-            visible: false
-        },        
-    },
-    valueAxis:{
-        grid:{
-            visible: true
-        }
-    },
-    legend: {
-      visible:false,
-        verticalAlignment: "bottom",
-        horizontalAlignment: "center"
-    }
-});
 
 </script>
 

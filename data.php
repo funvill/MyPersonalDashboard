@@ -1,4 +1,4 @@
-<?php 
+<pre><?php 
 /**
  * My Personal Dashboard 
  * 
@@ -68,6 +68,7 @@ $results = $dbhandle->query('CREATE TABLE IF NOT EXISTS last_fm (datestring char
 $results = $dbhandle->query('CREATE TABLE IF NOT EXISTS github  (datestring char(255), public_repos int, public_gists int, followers int, following int, contributions int, PRIMARY KEY (datestring))'); 
 // $results = @$dbhandle->query('ALTER TABLE github ADD COLUMN contributions int;');
 $results = $dbhandle->query('CREATE TABLE IF NOT EXISTS foursquare (datestring char(255), checkins int, PRIMARY KEY (datestring))'); 
+$results = $dbhandle->query('CREATE TABLE IF NOT EXISTS moves (datestring char(255), duration int, distance int, steps int, PRIMARY KEY (datestring))'); 
 
 // Twitter
 // -------------------------------------------------
@@ -112,19 +113,15 @@ if( isset( $results['public_repos'] ) && isset( $results['public_gists'] ) && is
 	$sql_results = $dbhandle->query('UPDATE github SET public_repos="'.$results['public_repos'] .'", public_gists="'. $results['public_gists'] .'", followers="'. $results['followers'] .'", following="'. $results['following'] .'" WHERE datestring = "'. date('Y-m-d') .'"; ');
 }
 
+
+// Moves 
+// -------------------------------------------------
+// ToDo: 
+
 // Four Square 
 // -------------------------------------------------
-/*
-$response = GetURL( $settings['foursquare']['url']. 'users/self/checkins?oauth_token='. $settings['foursquare']['oauth_token'] .'&v=20140322&limit=1' ); 
-$results = json_decode($response, true); 
-if( isset( $results['response']['checkins']['count'] ) ) {
-	$sql_results = $dbhandle->query('INSERT OR REPLACE INTO foursquare (datestring, checkins ) VALUES ( "'. date('Y-m-d') .'", "'. $results['response']['checkins']['count'] .'" )');
-}
-*/
-
 $current_time = time(); 
 $num_of_requests = 0 ; 
-
 
 // Check the database to see if what values from the last year that we have already gotten
 $foursquare_existing_recoreds = array() ; 
@@ -250,4 +247,4 @@ for( $year = date('Y') ; $year <= date('Y') ; $year++ ) {
 		}
 	}
 }
-?>
+?></pre>
